@@ -8,8 +8,11 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
+
+var debug bool
 
 func main() {
 	loadEnvs()
@@ -18,31 +21,41 @@ func main() {
 	defer db.CloseInfluxConnection()
 	defer db.ClosePostgresConnection()
 
+	debug = os.Getenv("DEBUG") == "true"
+
+	postgresConnection := db.GetPostgresConnection()
+	queryFactory := queries.CreateQueryFactory(postgresConnection)
+
+	queriesToUseDefinition := strings.Split(os.Getenv("ACTIVE_QUERIES"), ",")
+	var queriesToUse []queries.Query
+	for _, queryName := range queriesToUseDefinition {
+		createdQuery, err := queryFactory.Create(queryName)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		queriesToUse = append(queriesToUse, createdQuery)
+	}
+
 	numOfSeconds, _ := strconv.Atoi(os.Getenv("REFRESH_RATE_SEC"))
-	pullDataEvery(time.Duration(numOfSeconds)*time.Second, getAllData)
+	pullDataEvery(time.Duration(numOfSeconds)*time.Second, getAllData, queriesToUse)
 }
 
-func pullDataEvery(d time.Duration, f func(time.Time)) {
+func pullDataEvery(d time.Duration, f func(time.Time, []queries.Query), args []queries.Query) {
 	for x := range time.Tick(d) {
-		f(x)
+		f(x, args)
 	}
 }
 
-func getAllData(t time.Time) {
-	postgresConnection := db.GetPostgresConnection()
-	databaseSize := queries.DatabaseSize(postgresConnection)
-	numberOfConnections := queries.NumberOfConnections(postgresConnection)
-	numberOfRunningQueries := queries.NumberOfRunningQueries(postgresConnection)
-	numberOfRunningQueriesOver15Sec := queries.NumberOfRunningQueriesOver15sec(postgresConnection)
-	totalNumberOfTransactions := queries.TotalNumberOfTransactions(postgresConnection)
+func getAllData(t time.Time, queries []queries.Query) {
+	for _, query := range queries {
+		qValue := query.GetValue()
+		db.StoreDatapoint(query.GetName(), qValue)
+		if debug {
+			log.Print(" Saved datapoint: Name=" + query.GetName() + " Value=" + strconv.Itoa(qValue))
+		}
+	}
 
-	db.StoreDatapoint("database_size", databaseSize);
-	db.StoreDatapoint("no_of_connections", numberOfConnections);
-	db.StoreDatapoint("no_of_running_queries", numberOfRunningQueries);
-	db.StoreDatapoint("no_of_running_queries_over_15s", numberOfRunningQueriesOver15Sec);
-	db.StoreDatapoint("total_no_of_transactions", totalNumberOfTransactions);
-
-	log.Print("Saved datapoint: ", databaseSize, numberOfConnections, numberOfRunningQueries, numberOfRunningQueriesOver15Sec, totalNumberOfTransactions)
 }
 
 func loadEnvs() {
