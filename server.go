@@ -64,28 +64,3 @@ func loadEnvs() {
 		log.Fatal(".env file not found. Ensure it exists and it's readable. Exit...")
 	}
 }
-
-/**
-func transactionsHandler(writer http.ResponseWriter, request *http.Request) {
-	rows, err := postgresConnection.Query("SELECT * FROM users")
-
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	users := []User{}
-
-	for rows.Next() {
-		user := User{}
-		err := rows.Scan(&user.Id, &user.FirstName, &user.LastName)
-		if err != nil {
-			log.Fatal(err)
-		}
-		users = append(users, user)
-	}
-
-	jsonOutput, _ := json.Marshal(users)
-
-	fmt.Fprintln(writer, string(jsonOutput))
-}
-*/
