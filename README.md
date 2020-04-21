@@ -33,6 +33,6 @@ All of the following environmental variables are required for the server to run.
 | INFLUX_USER= | string | Username to InfluxDB |
 | INFLUX_PASSWORD | string | Password to InfluxDB |
 | INFLUX_DB_NAME | string | Database name in InfluxDB |
-| REFRESH_RATE_SEC | int | How often statistics should be pulled from Postgres database |
+| REFRESH_RATE_SEC | int | How often statistics should be pulled from Postgres database, in seconds. |
 | ACTIVE_QUERIES | Any comma-separated combination of the following:  <ul><li>DatabaseSize</li><li>NumberOfConnections</li><li>NumberOfRunningQueries</li><li>NumberOfRunningQueriesOver15sec</li><li>TotalNumberOfTransactions</li> | Defines which queries should be executed |
 | DEBUG | true/false | Should debug information be printed to stdout |
