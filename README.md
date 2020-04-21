@@ -13,7 +13,7 @@ go get github.com/influxdata/influxdb1-client/v2
 Additionally, Postgres and Influx databases have to be accessible.
 
 ### Building
-1. Install dependencies (see (Requirements)[#requirements])
+1. Install dependencies (see [Requirements](#requirements) )
 2. `make all`
 3. Executable `server` will be created in `bin/` directory
 
