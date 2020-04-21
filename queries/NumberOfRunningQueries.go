@@ -5,9 +5,21 @@ import (
 	"log"
 )
 
-func NumberOfRunningQueries(db *sql.DB) int {
+type NumberOfRunningQueries struct {
+	name string
+	db   *sql.DB
+}
+
+func CreateNumberOfRunningQueries(db *sql.DB) Query {
+	return NumberOfRunningQueries{
+		db:   db,
+		name: "NumberOfRunningQueries",
+	}
+}
+
+func (q NumberOfRunningQueries) GetValue() int {
 	var value int
-	err := db.QueryRow("SELECT " +
+	err := q.db.QueryRow("SELECT " +
 		"count(pid)  as \"value\" " +
 		"FROM pg_stat_activity " +
 		"WHERE query != '<IDLE>' " +
@@ -20,4 +32,8 @@ func NumberOfRunningQueries(db *sql.DB) int {
 	}
 
 	return value
+}
+
+func (q NumberOfRunningQueries) GetName() string {
+	return q.name
 }

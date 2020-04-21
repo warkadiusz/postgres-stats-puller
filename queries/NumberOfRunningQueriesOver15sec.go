@@ -5,10 +5,22 @@ import (
 	"log"
 )
 
-func NumberOfRunningQueriesOver15sec(db *sql.DB) int {
+type NumberOfRunningQueriesOver15sec struct {
+	name string
+	db   *sql.DB
+}
+
+func CreateNumberOfRunningQueriesOver15sec(db *sql.DB) Query {
+	return NumberOfRunningQueriesOver15sec{
+		db:   db,
+		name: "NumberOfRunningQueriesOver15sec",
+	}
+}
+
+func (q NumberOfRunningQueriesOver15sec) GetValue() int {
 	var value int
 
-	row := db.QueryRow("SELECT count(pid) AS \"value\"  FROM pg_stat_activity WHERE query != '<IDLE>' AND query NOT ILIKE '%pg_stat_activity%' AND usename IS NOT NULL AND query IS NOT NULL")
+	row := q.db.QueryRow("SELECT count(pid) AS \"value\"  FROM pg_stat_activity WHERE query != '<IDLE>' AND query NOT ILIKE '%pg_stat_activity%' AND usename IS NOT NULL AND query IS NOT NULL")
 	err := row.Scan(&value)
 
 	if err != nil {
@@ -16,4 +28,8 @@ func NumberOfRunningQueriesOver15sec(db *sql.DB) int {
 	}
 
 	return value
+}
+
+func (q NumberOfRunningQueriesOver15sec) GetName() string {
+	return q.name
 }
