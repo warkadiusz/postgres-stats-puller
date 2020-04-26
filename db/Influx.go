@@ -1,6 +1,7 @@
 package db
 
 import (
+	"errors"
 	"fmt"
 	_ "github.com/influxdata/influxdb1-client" // this is important because of the bug in go mod
 	client "github.com/influxdata/influxdb1-client/v2"
@@ -48,6 +49,20 @@ func StoreDatapoint(name string, value int) {
 	if err != nil {
 		log.Fatal("Error: ", err.Error())
 	}
+}
+
+func QueryData(table string, after time.Time, before time.Time) ([]client.Result, error) {
+	q := client.NewQuery("SELECT mean(\"val\") AS \"value\" FROM \""+table+"\" WHERE time > '"+after.Format(time.RFC3339)+"' AND time < '"+before.Format(time.RFC3339)+"' GROUP BY time(10s) FILL(null)", os.Getenv("INFLUX_DB_NAME"), "")
+	response, err := connection.Query(q)
+	if err != nil || response.Error() != nil {
+		log.Print(err, response.Error())
+		return nil, errors.New("Can't fetch data from db.")
+	}
+	return response.Results, nil
+}
+
+func GetInfluxConnection() client.Client {
+	return connection
 }
 
 func CloseInfluxConnection() {
