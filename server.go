@@ -30,10 +30,6 @@ func main() {
 	defer db.ClosePostgresConnection()
 	queryFactory = queries.CreateQueryFactory(db.GetPostgresConnection())
 
-	go func() {
-		log.Println(http.ListenAndServe("localhost:6060", nil))
-	}()
-
 	pullRate := getPullRate()
 
 	wg := sync.WaitGroup{}
