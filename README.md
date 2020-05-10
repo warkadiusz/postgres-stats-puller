@@ -1,8 +1,43 @@
 # postgres-stats-puller
 Executes specified statistics queries (like database size, number of transactions etc.) on Postgres database
 and saves the results to InfluxDB as a time series.
+Additionally, provides WebSocket and HTTP endpoints for respectively live updates and historical data access.
 
-### Requirements
+## Endpoints
+### `GET /data/<QueryName>?after=<ISO date time>&before=<ISO date time>`
+Returns historical data for given query name between specified two dates and times. To avoid too much data at once, all requests always return data averaged to 30 data points only. Periods without any data are filled with zeroes. See example below.
+
+#### Example
+Request: `GET /data/DatabaseSize?after=2020-05-01T00:00:00&before=2020-05-30T23:59:59`  
+Response:
+```json5
+{
+  "status": "success",
+  "code": 200,
+  "data": {
+    "2020-05-01T00:00:00": 18.0,
+    "2020-05-02T00:00:00": 0,
+    /*...*/
+    "2020-05-30T00:00:00": 53.1415
+  }
+}
+```
+
+###  WebSocket live data push stream
+Every client connected to web socket server automatically subscribes to that stream.  
+Data:
+```json5
+{
+  "status": "datapoint",
+  "code": 200,
+  "data": {
+    "DatabaseSize": 12345
+  }
+}
+```
+
+
+## Requirements
 In order to build, following modules have to be imported:
 ```
 go get github.com/joho/godotenv
@@ -12,12 +47,12 @@ go get github.com/influxdata/influxdb1-client/v2
 ```
 Additionally, Postgres and Influx databases have to be accessible.
 
-### Building
+## Building
 1. Install dependencies (see [Requirements](#requirements) )
 2. `make all`
 3. Executable `server` will be created in `bin/` directory
 
-### Runtime env variables
+## Runtime env variables
 All of the following environmental variables are required for the server to run. They can be specified either in
 `.env` file in the same directory as executable file or passed during execution, like:  
 `POSTGRES_HOST=postgres POSTGRES_PORT=1234 server`
