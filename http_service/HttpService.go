@@ -1,6 +1,7 @@
 package http_service
 
 import (
+	"ask/db"
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -46,7 +47,7 @@ func CreateHttpService() *HttpService {
 func (hs *HttpService) serveData(w http.ResponseWriter, req *http.Request) {
 	requiredParameters := []string{"before", "after"}
 	parametersValues := make(map[string]string)
-	vars := mux.Vars(req)["name"]
+	dataName := mux.Vars(req)["name"]
 
 	for _, param := range requiredParameters {
 		paramValue, ok := req.URL.Query()[param]
@@ -70,8 +71,35 @@ func (hs *HttpService) serveData(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	//db.QueryData("")
+	//log.Print(dataName, before, after)
+	data, err := db.QueryData(dataName, after, before)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write(jsonify(Response{Status: "error", Code: 500, Data: "Internal server error"}))
+	}
+
+	responseDataPoints := map[string]float32{}
+
+	for _, dataPoint := range data.Series[0].Values {
+		val := 0.0
+		if dataPoint[1] != nil {
+			val, _ = dataPoint[1].(json.Number).Float64()
+		}
+
+		responseDataPoints[dataPoint[0].(string)] = float32(val)
+	}
+
+	byteArrDataPoints, _ := json.Marshal(responseDataPoints)
+	stringifiedDataPoints := string(byteArrDataPoints)
+
+	response := Response{
+		Status: "success",
+		Code:   200,
+		Data:   stringifiedDataPoints,
+	}
 	w.WriteHeader(http.StatusOK)
-	log.Print(vars, before, after)
+	w.Write(jsonify(response))
 }
 
 func (hs *HttpService) serveWS(w http.ResponseWriter, req *http.Request) {

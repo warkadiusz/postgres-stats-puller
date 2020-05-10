@@ -45,7 +45,7 @@ func main() {
 
 func pullDataEvery(pullRate time.Duration) {
 	for range time.Tick(pullRate) {
-		getAllData()
+		//getAllData()
 	}
 }
 
@@ -100,6 +100,6 @@ func setupDebug() {
 
 func debugLog(msg string) {
 	if debug {
-		log.Print(msg)
+		//log.Print(msg)
 	}
 }

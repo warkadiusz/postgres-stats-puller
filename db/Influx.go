@@ -51,14 +51,18 @@ func StoreDatapoint(name string, value int) {
 	}
 }
 
-func QueryData(table string, after time.Time, before time.Time) ([]client.Result, error) {
-	q := client.NewQuery("SELECT mean(\"val\") AS \"value\" FROM \""+table+"\" WHERE time > '"+after.Format(time.RFC3339)+"' AND time < '"+before.Format(time.RFC3339)+"' GROUP BY time(10s) FILL(null)", os.Getenv("INFLUX_DB_NAME"), "")
+func QueryData(table string, after time.Time, before time.Time) (client.Result, error) {
+
+	groupBy := before.Sub(after) / 30
+
+	q := client.NewQuery("SELECT mean(\"val\") AS \"value\" FROM \""+table+"\" WHERE time > '"+after.Format(time.RFC3339)+"' AND time < '"+before.Format(time.RFC3339)+"' GROUP BY time("+groupBy.String()+")", os.Getenv("INFLUX_DB_NAME"), "")
 	response, err := connection.Query(q)
 	if err != nil || response.Error() != nil {
 		log.Print(err, response.Error())
-		return nil, errors.New("Can't fetch data from db.")
+		return client.Result{}, errors.New("Can't fetch data from db.")
 	}
-	return response.Results, nil
+
+	return response.Results[0], nil
 }
 
 func GetInfluxConnection() client.Client {
