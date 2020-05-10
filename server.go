@@ -7,7 +7,6 @@ import (
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"log"
-	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"strconv"

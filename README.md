@@ -44,6 +44,8 @@ go get github.com/joho/godotenv
 go get github.com/lib/pq
 go get github.com/influxdata/influxdb1-client
 go get github.com/influxdata/influxdb1-client/v2
+go get github.com/gorilla/mux
+go get github.com/gorilla/websocket
 ```
 Additionally, Postgres and Influx databases have to be accessible.
 

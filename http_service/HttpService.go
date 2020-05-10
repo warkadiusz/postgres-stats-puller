@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 )
@@ -40,7 +41,10 @@ func CreateHttpService() *HttpService {
 	httpServer.HandleFunc("/data/{name}", hs.serveData)
 	httpServer.HandleFunc("/ws", hs.serveWS)
 
-	go http.ListenAndServe(":8090", httpServer)
+	listenPort := os.Getenv("LISTEN_PORT")
+
+	log.Println("Server up and running on port", listenPort)
+	go http.ListenAndServe(listenPort, httpServer)
 	return &hs
 }
 
