@@ -54,6 +54,7 @@ func StoreDatapoint(name string, value int) {
 func QueryData(table string, after time.Time, before time.Time) (client.Result, error) {
 
 	groupBy := before.Sub(after) / 30
+	groupBy = groupBy.Round(time.Minute)
 
 	q := client.NewQuery("SELECT mean(\"val\") AS \"value\" FROM \""+table+"\" WHERE time > '"+after.Format(time.RFC3339)+"' AND time < '"+before.Format(time.RFC3339)+"' GROUP BY time("+groupBy.String()+")", os.Getenv("INFLUX_DB_NAME"), "")
 	response, err := connection.Query(q)

@@ -48,6 +48,7 @@ func (hs *HttpService) serveData(w http.ResponseWriter, req *http.Request) {
 	requiredParameters := []string{"before", "after"}
 	parametersValues := make(map[string]string)
 	dataName := mux.Vars(req)["name"]
+	enableCors(&w)
 
 	for _, param := range requiredParameters {
 		paramValue, ok := req.URL.Query()[param]
@@ -75,17 +76,20 @@ func (hs *HttpService) serveData(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_, _ = w.Write(jsonify(Response{Status: "error", Code: 500, Data: "Internal server error"}))
+		return
 	}
 
 	responseDataPoints := map[string]float32{}
 
-	for _, dataPoint := range data.Series[0].Values {
-		val := 0.0
-		if dataPoint[1] != nil {
-			val, _ = dataPoint[1].(json.Number).Float64()
-		}
+	if len(data.Series) > 0 {
+		for _, dataPoint := range data.Series[0].Values {
+			val := 0.0
+			if dataPoint[1] != nil {
+				val, _ = dataPoint[1].(json.Number).Float64()
+			}
 
-		responseDataPoints[dataPoint[0].(string)] = float32(val)
+			responseDataPoints[dataPoint[0].(string)] = float32(val)
+		}
 	}
 
 	response := Response{
@@ -94,7 +98,8 @@ func (hs *HttpService) serveData(w http.ResponseWriter, req *http.Request) {
 		Data:   responseDataPoints,
 	}
 	w.WriteHeader(http.StatusOK)
-	w.Write(jsonify(response))
+	_, _ = w.Write(jsonify(response))
+	return
 }
 
 func (hs *HttpService) serveWS(w http.ResponseWriter, req *http.Request) {
@@ -121,7 +126,6 @@ func (hs *HttpService) BroadcastDatapoint(name string, value int) {
 	defer hs.clientsMux.Unlock()
 
 	hs.clientsMux.Lock()
-	log.Print(hs.clients)
 	for _, client := range hs.clients {
 		_ = client.WriteMessage(websocket.TextMessage, jsonify(Response{
 			Status: "datapoint",
@@ -154,4 +158,8 @@ func (hs *HttpService) removeClient(conn *websocket.Conn) {
 func jsonify(response Response) []byte {
 	msg, _ := json.Marshal(response)
 	return msg
+}
+
+func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
 }

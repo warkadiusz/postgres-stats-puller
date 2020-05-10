@@ -10,7 +10,6 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
-	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -45,13 +44,12 @@ func main() {
 
 func pullDataEvery(pullRate time.Duration) {
 	for range time.Tick(pullRate) {
-		//getAllData()
+		getAllData()
 	}
 }
 
 func getAllData() {
 	definedQueries := getQueriesToUse()
-	log.Print(runtime.NumGoroutine())
 
 	for _, query := range definedQueries {
 		qValue := query.GetValue()
@@ -100,6 +98,6 @@ func setupDebug() {
 
 func debugLog(msg string) {
 	if debug {
-		//log.Print(msg)
+		log.Print(msg)
 	}
 }
