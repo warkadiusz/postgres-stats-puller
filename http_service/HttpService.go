@@ -17,9 +17,9 @@ type HttpService struct {
 }
 
 type Response struct {
-	Status string `json:"status"`
-	Code   int    `json:"code"`
-	Data   string `json:"data"`
+	Status string      `json:"status"`
+	Code   int         `json:"code"`
+	Data   interface{} `json:"data"`
 }
 
 var upgrader = websocket.Upgrader{
@@ -71,8 +71,6 @@ func (hs *HttpService) serveData(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	//db.QueryData("")
-	//log.Print(dataName, before, after)
 	data, err := db.QueryData(dataName, after, before)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -90,13 +88,10 @@ func (hs *HttpService) serveData(w http.ResponseWriter, req *http.Request) {
 		responseDataPoints[dataPoint[0].(string)] = float32(val)
 	}
 
-	byteArrDataPoints, _ := json.Marshal(responseDataPoints)
-	stringifiedDataPoints := string(byteArrDataPoints)
-
 	response := Response{
 		Status: "success",
 		Code:   200,
-		Data:   stringifiedDataPoints,
+		Data:   responseDataPoints,
 	}
 	w.WriteHeader(http.StatusOK)
 	w.Write(jsonify(response))
@@ -125,16 +120,13 @@ func (hs *HttpService) serveWS(w http.ResponseWriter, req *http.Request) {
 func (hs *HttpService) BroadcastDatapoint(name string, value int) {
 	defer hs.clientsMux.Unlock()
 
-	data, _ := json.Marshal(map[string]int{name: value})
-	dataString := string(data)
-
 	hs.clientsMux.Lock()
 	log.Print(hs.clients)
 	for _, client := range hs.clients {
 		_ = client.WriteMessage(websocket.TextMessage, jsonify(Response{
 			Status: "datapoint",
 			Code:   200,
-			Data:   dataString,
+			Data:   map[string]int{name: value},
 		}))
 	}
 }
